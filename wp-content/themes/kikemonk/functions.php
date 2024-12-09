@@ -10,6 +10,7 @@
  *
  */
 $monk_includes = [
+	"functions/cpt.php", // CPT define
 	"functions/init.php", // Initial theme setup and constants
 	"functions/config.php", // Configuration
 	"functions/scripts.php", // Scripts and stylesheets
