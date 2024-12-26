@@ -4,7 +4,7 @@ const webpack = require('webpack');
 require('dotenv').config();
 
 // The theme name should be located in your .env file
-const THEME_NAME = process.env.THEME_NAME || 'kikemonk',
+const THEME_NAME = process.env.THEME_NAME || 'puroclean',
 	PROXY = process.env.PROXY,
 	THEME_DIRECTORY = `wp-content/themes/${THEME_NAME}`,
 	ASSETS_DIR = `${THEME_DIRECTORY}/assets`,
@@ -50,9 +50,9 @@ mix.browserSync({
 });
 
 mix.webpackConfig({
-  watchOptions: {
-    ignored: /build/, // Ignora los archivos en la carpeta build
-  },
+	watchOptions: {
+		ignored: /build/, // Ignora los archivos en la carpeta build
+	},
 	plugins: [
 		new webpack.ProvidePlugin({
 			$: 'jquery',
