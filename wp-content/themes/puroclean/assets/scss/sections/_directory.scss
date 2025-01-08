@@ -19,6 +19,20 @@
           font-family: $font-family-headline;
         }
       }
+
+      .inner-content{
+
+      }
     }
+  }
+}
+
+.page-franchise-wrap{
+  h4{
+    margin-top: 20px;
+    color: $primaryColor !important;
+  }
+  .lead{
+    @include make-lead;
   }
 }
