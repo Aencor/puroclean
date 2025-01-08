@@ -6,27 +6,50 @@
     </div>
 </header>
 
-<div class="page-directory-wrap py-36 container mx-auto">
-    <h4 class="h6">It is not only our support and expertise that make our franchises a success, it is also about great people. Take a look at some of our franchises:</h4>
+<div class="page-directory-wrap py-36 container px-6 xl:px-0 mx-auto">
+    <h4 class="h4">It is not only our support and expertise that make our franchises a success, it is also about great people. Take a look at some of our franchises:</h4>
 
-    <div class="mt-12 directory-grid grid grid-cols-1 md:grid-cols-2">
+    <div class="mt-12 directory-grid grid grid-cols-1 md:grid-cols-2 gap-9">
+        <?php
+            $args = array(
+                'post_type' => 'locations'
+            );
+            $query = new WP_Query($args);
+            while($query->have_posts()) : $query->the_post();
+
+            $picture = get_field('picture');
+            $intro = get_field('intro');
+            $name = get_field('name');
+            $employees = get_field('employees');
+            $address = get_field('address');
+            $phone = get_field('phone_contact');
+            $email = get_field('email');
+            $url = get_field('url');
+            $city = get_field('city');
+            if($employees){
+                $numberOfEmployees = count($employees);
+                $employeeLabel = 'Employee';
+                if($numberOfEmployees > 1){
+                    $employeeLabel = 'Employees';
+                }
+            }
+        ?>
         <div class="grid-item flex flex-col md:flex-row gap-6 items-center justify-center md:justify-between border-solid">
             <div class="image">
-                <img class=" rounded-full" src="<?php bloginfo('template_url'); ?>/assets/img/dummy/Untitled-design-5-150x150.webp" alt="">
+                <img class=" rounded-full" src="<?= $picture['url'] ?>" alt="<?= $picture['name']; ?>">
             </div>
 
             <div class="content">
                 <header class="content-head">
-                    <p>PuroClean Emergency Fire, Water and Mold Damage Restoration New Jersey operated by</p>
-                    <h2>Harry Allcroft</h2>
+                    <?= $intro ? '<p>' . $intro . '</p>' : null; ?>
+                    <h2><?= $name; ?></h2>
                 </header>
 
                 <div class="inner-content flex flex-col gap-3">
-                    <div class="employee">1 employees</div>
-                    <div class="address">1810 Underwood Blvd., Suite 1, Burlington, NJ 08075 </div>
-                    <div class="url"><a href="https://www.puroclean.com/delran-nj-puroclean-emergency-recovery-services">Visit Website - #606</a></div>
-
-                    <a href="" class="btn btn-small btn-primary">Read More ></a>
+                    <?= $employees ? '<div class="employee">' . $numberOfEmployees . ' ' . $employeeLabel . ' </div>' : null; ?>
+                    <?= $address ? '<div class="address">' . $address . '</div>' : null; ?>
+                    <?= $url ? '<div class="url"><a href="' . $url . ' ">Visit Website</a></div>' : null; ?>
+                    <a href="<?= get_the_permalink(); ?>" class="btn btn-small btn-primary">Read More ></a>
                 </div>
             </div>
 
@@ -39,6 +62,7 @@
                 </div>
             </div>
         </div>
+        <?php endwhile; wp_reset_postdata(  ); ?>
     </div>
 </div>
 <?php get_footer(); ?>

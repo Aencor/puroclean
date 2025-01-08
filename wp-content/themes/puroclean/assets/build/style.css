@@ -569,6 +569,15 @@ video {
 .gap-7{
   gap: 1.75rem;
 }
+.gap-8{
+  gap: 2rem;
+}
+.gap-9{
+  gap: 2.25rem;
+}
+.gap-24{
+  gap: 6rem;
+}
 .self-start{
   align-self: flex-start;
 }
@@ -1549,6 +1558,10 @@ ol li:before {
     padding-top: 13rem;
     padding-bottom: 13rem;
   }
+  .md\:px-0{
+    padding-left: 0px;
+    padding-right: 0px;
+  }
   .md\:text-left{
     text-align: left;
   }
@@ -1556,6 +1569,12 @@ ol li:before {
 @media (min-width: 1024px){
   .lg\:block{
     display: block;
+  }
+}
+@media (min-width: 1280px){
+  .xl\:px-0{
+    padding-left: 0px;
+    padding-right: 0px;
   }
 }
 

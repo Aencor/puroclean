@@ -17,7 +17,7 @@
     </div>
 </header>
 
-<div class="page-franchise-wrap py-24 container mx-auto">
+<div class="page-franchise-wrap py-24 container px-6 xl:px-0 mx-auto">
     <div class="flex flex-col md:flex-row gap-12 items-start md:items-center justify-center md:justify-between">
         <div class="franchise-info basis-2/3 flex flex-col gap-7">
             <div class="breadcrumb">
@@ -27,36 +27,47 @@
             <div class="entry lead">
                 <?= get_the_excerpt(); ?>
             </div>
-
-            <div class="team">
-                <h4>Our Team</h4>
-
-                <?= $name; ?>
-            </div>
-
-            <div class="contact">
-                <div>
-                    <h4>Phone</h4>
-                    <a href="tel:<?= $phone ?>">
-                        <?= $phone ?>
-                    </a>
+            
+            <div class="flex gap-24">
+                <div class="contact">
+                    <div>
+                        <h4>Phone</h4>
+                        <a href="tel:<?= $phone ?>">
+                            <?= $phone ?>
+                        </a>
+                    </div>
+                    <div>
+                        <h4>Email</h4>
+                        <a href="mailto:<?= $email ?>">
+                            <?= $email ?>
+                        </a>
+                    </div>
+                    <div>
+                        <h4>Address</h4>
+                        <p>
+                            <?= $address ?>
+                        </p>
+                    </div>
+    
+                    <div>
+                        <a href="<?= $url ?>" class="btn btn-small btn-primary">Visit Website ></a>
+                    </div>
                 </div>
-                <div>
-                    <h4>Email</h4>
-                    <a href="mailto:<?= $email ?>">
-                        <?= $email ?>
-                    </a>
+                <div class="team">
+                    <h4>Our Team</h4>
+    
+                    <ul>
+                        <?php foreach($employees as $employee) : ?>
+                            <li>
+                                <strong>
+                                    <?= $employee['employee_name']; ?>
+                                </strong>
+                                , <?= $employee['employee_position']; ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
                 </div>
-                <div>
-                    <h4>Address</h4>
-                    <p>
-                        <?= $address ?>
-                    </p>
-                </div>
-
-                <div>
-                    <a href="<?= $url ?>" class="btn btn-small btn-primary">Visit Website ></a>
-                </div>
+    
             </div>
         </div>
 
