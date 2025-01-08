@@ -1,0 +1,12 @@
+.forms{
+  input[type=text]{
+    width: 100%;
+    padding: 15px 25px;
+    color: #231f20;
+    background-color: #e8e8e8;
+    border: 1px solid #b7b7b7;
+    &::placeholder{
+      color: #231f20;
+    }
+  }
+}

@@ -31,7 +31,38 @@ function post_types() {
 		"taxonomies" => ["zip-codes", "state"]
 	]);
 
-	register_taxonomy("zip-codes", "cities", [
+	register_post_type("locations", [
+		"labels" => [
+			"name" => __("Locations"),
+			"singular_name" => __("Location"),
+			"menu_name" => __("Locations"),
+			"name_admin_bar" => __("Locations"),
+			"add_new" => __("Add New"),
+			"add_new_item" => __("Add New Location"),
+			"new_item" => __("New Location"),
+			"edit_item" => __("Edit Location"),
+			"view_item" => __("View Location"),
+			"all_items" => __("All Locations"),
+			"search_items" => __("Search Location"),
+			"parent_item_colon" => __("Parent Location:"),
+			"not_found" => __("No Locations found."),
+			"not_found_in_trash" => __("No Locations found in Trash.")
+		],
+		"public" => true,
+		"show_ui" => true,
+		"menu_icon" => "dashicons-media-spreadsheet",
+		"capability_type" => "post",
+		"hierarchical" => false,
+		"query_var" => true,
+		'show_in_rest' => true,
+		'supports' => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments' ),
+		"publicly_queryable" => true,
+		"exclude_from_search" => false,
+		"has_archive" => true,
+		"taxonomies" => ["zip-codes", "state"]
+	]);
+
+	register_taxonomy("zip-codes", array("cities", "locations"), [
 		"labels" => [
 			"name" => "Zip Codes",
 			"add_new_item" => "Add zip codes",
@@ -46,7 +77,7 @@ function post_types() {
 		"capabilities" => ["manage_terms" => "edit_pages"]
 	]);
 
-  register_taxonomy("state", "cities", [
+  register_taxonomy("state", array("cities", "locations"), [
 		"labels" => [
 			"name" => "State",
 			"add_new_item" => "Add state",

@@ -1,19 +1,8 @@
 <?php get_header(); ?>
-<main class="global-main py-5">
-    <div class="container xl mx-auto px-4 sm:px-0">
-    <?php if (have_posts()) {
-    	while (have_posts()) {
-    		the_post(); ?>
-        <div class="row">
-            <div class="col-12">
-                <div class="content-styled">
-                    <?php the_excerpt(); ?>
-                </div>
-            </div>
-        </div>
-    <?php
-    	}
-    } ?>
+
+<header class="page-header">
+    <div class="container mx-auto min-h-96">
+        <h1>Franchise Directory</h1>
     </div>
-</main>
+</header>
 <?php get_footer(); ?>

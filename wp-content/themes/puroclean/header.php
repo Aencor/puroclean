@@ -21,11 +21,9 @@
 
 <body <?php body_class(); ?>>
   <header class="py-4 shadow relative z-50">
-    <div class="container xl flex justify-between items-center mx-auto px-4 sm:px-0">
-      <a href="<?= get_bloginfo('url') ?>" class="logo">
-        Kikemonk
+    <div class="container mx-auto">
+      <a href="<?= get_bloginfo('url') ?>">
+        <img class=" max-w-32" src="<?= get_bloginfo('template_url') ?>/assets/img/logos/PuroClean-tg-R.svg" alt="">
       </a>
-
-      <a href="/styleguide" class="m-0 btn btn-large btn-primary">Styleguide</a>
     </div>
   </header>
