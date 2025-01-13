@@ -3,7 +3,238 @@
  */
 (function($){$(function () {
 
-    if ( ! $('body.wpallimport-plugin').length) return; // do not execute any code if we are not on plugin page
+	if ( ! $('body.wpallimport-plugin').length) return; // do not execute any code if we are not on plugin page
+
+	function overlayDivOverInput($input, divId) {
+		const $localInput = $($input);
+
+		// Get the name of the input/textarea
+		const inputName = $input.attr('name');
+
+		// Check if element is a textarea
+		const isTextarea = $input.is('textarea');
+
+		// Configure width value
+		const width = isTextarea ? '55%' : '100%';
+
+		// Apply position:relative to the parent of the input/textarea
+		$localInput.parent().css({position: 'relative'});
+
+		// Create the overlay div
+		const $div = $('<div/>', {
+			id: divId,
+			'data-input-name': inputName,
+			css: {position: 'absolute', top: 0, left: 0, 'z-index':-99},
+			height:$localInput.outerHeight(),
+			width: width
+		});
+
+		$div.insertAfter($input);
+
+		// Returning the jQuery object
+		return $div;
+	}
+
+	// Global declaration of $wpAllImportDrag and $wpAllImportOriginalColor so we can use them on dynamic elements.
+	var $wpAllImportDrag = null;
+	var $wpAllImportOriginalColor = '';
+
+	function wpaiMakeDroppable(){
+		let $targets = $('input, textarea');
+
+		$targets.on('click', function (e) {
+			if (!$wpAllImportDrag) return;
+
+			let oldValue = $(this).val();
+			let newValue = $wpAllImportDrag.data('xpath');
+			$(this).val(oldValue + newValue);
+
+			$wpAllImportDrag.css('color', $wpAllImportOriginalColor).css('font-weight', 'bold');
+			$wpAllImportDrag = null;
+		}).droppable({
+			drop: function (event, ui) {
+				let oldValue = $(this).val();
+				let newValue = ui.draggable.data('xpath') || '';
+				$(this).val(oldValue + newValue);
+			},
+			greedy: true,
+			tolerance: 'touch',
+			disabled: false
+		});
+
+	}
+
+	function wpaiMakeDroppableTinyMce() {
+
+		// Ensure tinymce is defined before use.
+		if (typeof tinymce === 'undefined') {
+			return;
+		}
+
+		// Get tinymce instance
+		var ed = tinymce.get('content');
+
+		// Function to get current iframe bounds.
+		function getIframeBounds() {
+			var tinymceIframe = $('#content_ifr');
+			if (tinymceIframe.length === 0) {
+				return null;
+			}
+			var iframeOffset = tinymceIframe.offset();
+			return {
+				top: iframeOffset.top - $(window).scrollTop(),
+				left: iframeOffset.left - $(window).scrollLeft(),
+				bottom: iframeOffset.top + tinymceIframe.height() - $(window).scrollTop(),
+				right: iframeOffset.left + tinymceIframe.width() - $(window).scrollLeft()
+			};
+		}
+
+		// Initial drop area coordinates.
+		var dropArea = getIframeBounds();
+		if (!dropArea) {
+			return;
+		}
+
+		// Apply draggable to elements.
+		$(".ui-draggable").draggable({
+			helper: function () {
+				return $('<div>').text($(this).data('xpath'));
+			},
+			start: function (event, ui) {
+				// Create a duplicate node as a proxy
+				proxy = ui.helper.clone().appendTo('body');
+			},
+			drag: function (event, ui) {
+				// Recalculate drop area for iframe.
+				dropArea = getIframeBounds();
+
+				// Check if draggable is over the tinymce, update proxy to follow cursor and hide the helper
+				if (
+					event.clientX >= dropArea.left &&
+					event.clientX <= dropArea.right &&
+					event.clientY >= dropArea.top &&
+					event.clientY <= dropArea.bottom
+				) {
+					proxy.css({ top: event.pageY, left: event.pageX });
+					ui.helper.hide();
+				} else {
+					proxy.css({ top: 'auto', left: 'auto' });
+					ui.helper.show();
+				}
+			},
+			stop: function (event, ui) {
+				// Recalculate drop area for iframe.
+				dropArea = getIframeBounds();
+
+				// Append to tinymce content if it was dropped on tinymce
+				if (
+					event.clientX >= dropArea.left &&
+					event.clientX <= dropArea.right &&
+					event.clientY >= dropArea.top &&
+					event.clientY <= dropArea.bottom
+				) {
+					ed.setContent(
+						ed.getContent() + $(this).data('xpath')
+					);
+				}
+				// Clean up proxy and show the helper again
+				proxy.remove();
+				ui.helper.show();
+			},
+		});
+
+		ed.on('click', function (e) {
+			if (!$wpAllImportDrag) return;
+
+			let oldValue = ed.getContent();
+			let newValue = $wpAllImportDrag.data('xpath') || '';
+
+			ed.setContent(oldValue + newValue);
+
+			$wpAllImportDrag.css('color', $wpAllImportOriginalColor).css('font-weight', 'bold');
+			$wpAllImportDrag = null;
+		});
+	}
+
+	function wpaiMakeDroppableSingle($parent) {
+
+		if($parent.hasClass('dragging')){
+			return;
+		}
+
+		$parent.on('click', 'input, textarea', function (e) {
+			if (!$wpAllImportDrag) return;
+
+			let oldValue = $(this).val();
+			let newValue = $wpAllImportDrag.data('xpath') || '';
+			$(this).val(oldValue + newValue);
+
+			$wpAllImportDrag.css('color', $wpAllImportOriginalColor).css('font-weight', 'bold');
+			$wpAllImportDrag = null;
+		});
+
+		let $targets = $parent.find('input, textarea');
+		let divCounter = 0; // counter to generate unique ids for divs
+
+		$targets.each(function() {
+			let $input = $(this);
+			let divId = 'droppableDiv' + divCounter++; // generate a unique id based on the counter
+
+			let $div = overlayDivOverInput($input, divId);
+
+			// Apply jQuery UI droppable to the div
+			$div.droppable({
+				drop: function (event, ui) {
+					let inputName = $(this).data('input-name');
+					// Select only the closest sibling input/textarea with provided name
+					let $inputOrTextarea = $(this).siblings("input[name='" + inputName + "'], textarea[name='" + inputName + "']").first();
+					let oldValue = $inputOrTextarea.val();
+					let newValue = ui.draggable.data('xpath') || '';
+					$inputOrTextarea.val(oldValue + newValue);
+				}
+			});
+		});
+
+	}
+
+	function wpaiObserveFieldAddition()
+	{
+
+		// Make drag and drop work for dynamically added elements.
+		// Select the node that will be observed for child addition
+		let wpaiXmlTargetNode = document.querySelector('.wpallimport-layout');
+
+		if(!wpaiXmlTargetNode){
+			return;
+		}
+
+		// Options for the observer (which mutations to observe)
+		let wpaiXmlConfig = {childList: true, subtree: true};
+
+		// Callback function to execute when mutations are observed
+		let wpaiXmlCallback = function (mutationsList) {
+			for (let mutation of mutationsList) {
+				if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+					mutation.addedNodes.forEach((node) => {
+						if (node.nodeType === Node.ELEMENT_NODE) {
+
+								wpaiMakeDroppableSingle($(node));
+								wpaiMakeDroppableTinyMce();
+
+						}
+					});
+				}
+			}
+		};
+
+		// Create an observer instance linked to the callback function
+		let wpaiXmlObserver = new MutationObserver(wpaiXmlCallback);
+
+		// Start observing the target node for configured mutations
+		wpaiXmlObserver.observe(wpaiXmlTargetNode, wpaiXmlConfig);
+	}
+
+	wpaiObserveFieldAddition();
 
     function wpai_set_custom_select_image() {
         // The class name to add to the element.
@@ -754,29 +985,6 @@
 		var $tr = $(this).parent().parent().filter('tr.xml-element').next()[method]('collapsed');
 	});
 
-	// Global declaration of $wpAllImportDrag and $wpAllImportOriginalColor so we can use them on dynamic elements.
-	var $wpAllImportDrag = null;
-	var $wpAllImportOriginalColor = '';
-
-	function wpaiMakeDroppable(){
-		$('input, textarea').on('click', function (e) {
-			if (!$wpAllImportDrag) return;
-
-			let oldValue = $(this).val();
-			let newValue = $wpAllImportDrag.data('xpath');
-			$(this).val(oldValue + newValue);
-
-			$wpAllImportDrag.css('color', $wpAllImportOriginalColor).css('font-weight', 'bold');
-			$wpAllImportDrag = null;
-		}).droppable({
-			drop: function (event, ui) {
-				let oldValue = $(this).val();
-				let newValue = ui.draggable.data('xpath');
-				$(this).val(oldValue + newValue);
-			}
-		});
-	}
-
 	// [xml representation dynamic]
 	$.fn.xml = function (opt) {
 		if ( ! this.length) return this;
@@ -794,82 +1002,6 @@
 		if (action.init) {
 			this.data('initialized', true);
 		}
-		/*if (action.dragable) { // drag & drop
-			var _w; var _dbl = 0;
-			var $drag = $('__drag'); $drag.length || ($drag = $('<input type="text" id="__drag" readonly="readonly" />'));
-
-			$drag.css({
-				position: 'absolute',
-				background: 'transparent',
-				top: -50,
-				left: 0,
-				margin: 0,
-				border: 'none',
-				lineHeight: 1,
-				opacity: 0,
-				cursor: 'pointer',
-				borderRadius: 0,
-				zIndex:99
-			}).appendTo(document.body).mousedown(function (e) {
-				if (_dbl) return;
-				var _x = e.pageX - $drag.offset().left;
-				var _y = e.pageY - $drag.offset().top;
-				if (_x < 4 || _y < 4 || $drag.width() - _x < 0 || $drag.height() - _y < 0) {
-					return;
-				}
-				$drag.width($(document.body).width() - $drag.offset().left - 5).css('opacity', 1);
-				$drag.select();
-				_dbl = true; setTimeout(function () {_dbl = false;}, 400);
-			}).mouseup(function () {
-				$drag.css('opacity', 0).css('width', _w);
-				$drag.trigger('blur');
-			}).dblclick(function(){
-				if (dblclickbuf.selected) {
-					$('.xml-element[title*="/'+dblclickbuf.value.replace('{','').replace('}','')+'"]').removeClass('selected');
-
-					if ($(this).val() == dblclickbuf.value) {
-						dblclickbuf.value = '';
-						dblclickbuf.selected = false;
-					} else {
-						dblclickbuf.selected = true;
-						dblclickbuf.value = $(this).val();
-						$('.xml-element[title*="/'+$(this).val().replace('{','').replace('}','')+'"]').addClass('selected');
-					}
-				} else {
-					dblclickbuf.selected = true;
-					dblclickbuf.value = $(this).val();
-					$('.xml-element[title*="/'+$(this).val().replace('{','').replace('}','')+'"]').addClass('selected');
-				}
-			});
-
-			$('input, textarea').not('#__drag').on('focus', insertxpath );
-
-			$(document).mousemove(function () {
-				if (parseInt($drag.css('opacity')) != 0) {
-					setTimeout(function () {
-						$drag.css('opacity', 0);
-					}, 50);
-					setTimeout(function () {
-						$drag.css('width', _w);
-					}, 500);
-				}
-			});
-
-			this.find('.xml-tag.opening > .xml-tag-name, .xml-attr-name, .csv-tag.opening > .csv-tag-name, .ui-menu-item').each(function () {
-				var $this = $(this);
-				var xpath = '.';
-				if ($this.is('.xml-attr-name'))
-					xpath = '{' + ($this.parents('.xml-element:first').attr('title').replace(/^\/[^\/]+\/?/, '') || '.') + '/@' + $this.html().trim() + '}';
-				else if($this.is('.ui-menu-item'))
-					xpath = '{' + ($this.attr('title').replace(/^\/[^\/]+\/?/, '') || '.') + '}';
-				else
-					xpath = '{' + ($this.parent().parent().attr('title').replace(/^\/[^\/]+\/?/, '') || '.') + '}';
-
-				$this.mouseover(function (e) {
-					$drag.val(xpath).offset({left: $this.offset().left - 2, top: $this.offset().top - 2}).width(_w = $this.width()).height($this.height() + 4);
-				});
-			}).eq(0).mouseover();
-		}*/
 		if (action.dragable) {
 
 			this.find('.xml-tag.opening > .xml-tag-name, .xml-attr-name, .csv-tag.opening > .csv-tag-name, .ui-menu-item').each(function () {
@@ -893,7 +1025,8 @@
 							'border-radius': '5px'
 						});
 					},
-					cursor: 'pointer'
+					cursor: 'pointer',
+					iframeFix:true
 				}).css('cursor', 'pointer');
 			});
 
@@ -902,44 +1035,6 @@
 
 		return this;
 	};
-
-	function wpaiObserveFieldAddition()
-	{
-
-		// Make drag and drop work for dynamically added elements.
-		// Select the node that will be observed for child addition
-		let wpaiXmlTargetNode = document.querySelector('.wpallimport-layout');
-
-		if(!wpaiXmlTargetNode){
-			return;
-		}
-
-		// Options for the observer (which mutations to observe)
-		let wpaiXmlConfig = {childList: true, subtree: true};
-
-		// Callback function to execute when mutations are observed
-		let wpaiXmlCallback = function (mutationsList) {
-			for (let mutation of mutationsList) {
-				if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-					mutation.addedNodes.forEach((node) => {
-						if (node.nodeType === Node.ELEMENT_NODE) {
-							// Call your function on the new node
-							wpaiMakeDroppable();
-
-						}
-					});
-				}
-			}
-		};
-
-// Create an observer instance linked to the callback function
-		let wpaiXmlObserver = new MutationObserver(wpaiXmlCallback);
-
-// Start observing the target node for configured mutations
-		wpaiXmlObserver.observe(wpaiXmlTargetNode, wpaiXmlConfig);
-	}
-
-	wpaiObserveFieldAddition();
 
 	// template form: preview button
 	$('form.wpallimport-template').each(function () {
@@ -1477,8 +1572,10 @@
             // download images hosted elsewhere
             if ($(this).val() == 'yes'){
                 $('.search_through_the_media_library_logic').show();
+				$('.download_images').show();
             } else {
                 $('.search_through_the_media_library_logic').hide();
+				$('.download_images').hide();
             }
 		});
 
@@ -1491,8 +1588,10 @@
 			// download images hosted elsewhere
 			if ($(this).val() == 'yes'){
 				$('.search_through_the_media_library_logic').slideDown();
+				$('.download_images').slideDown();
 			} else {
 				$('.search_through_the_media_library_logic').slideUp();
+				$('.download_images').slideUp();
 			}
 		});
 
@@ -2025,9 +2124,10 @@
 			drop: function (event, ui) {
 				let input = $(this).find("input.xpath_field:first");
 				let oldValue = input.val();
-				let newValue = ui.draggable.data('xpath');
+				let newValue = ui.draggable.data('xpath') || '';
 				input.val(oldValue + newValue);
-			}
+			},
+			greedy:true
 		}).fadeIn().find('input.switcher').trigger('change');
 		let sortable = $(this).parents('.ui-sortable:first');
 		if (sortable.length){
@@ -2037,13 +2137,20 @@
 		//$('.widefat').on('focus', insertxpath );
 	});
 
-	$('.add-new-cat').on('click', function(){
+	$(document).on('click', '.add-new-cat', function(){
 		var $template = $(this).parents('td:first').find('ul.tax_hierarchical_logic').children('li.template');
 		var $number = $(this).parents('td:first').find('ul.tax_hierarchical_logic').children('li').length - 1;
 		var $cloneName = $template.find('input.assign_term').attr('name').replace('NUMBER', $number);
 		$clone = $template.clone(true);
 		$clone.find('input[name^=tax_hierarchical_assing]').attr('name', $cloneName);
-		$clone.insertBefore($template).css('display', 'none').removeClass('template').fadeIn().find('input.switcher').trigger('change');
+		$clone.insertBefore($template).css('display', 'none').removeClass('template').droppable({
+			drop: function (event, ui) {
+				let input = $(this).find("input.hierarchical_xpath_field:first");
+				let oldValue = input.val();
+				let newValue = ui.draggable.data('xpath');
+				input.val(oldValue + newValue);
+			}
+		}).fadeIn().find('input.switcher').trigger('change');
 	});
 
 	$('ol.sortable').each(function(){
@@ -2160,7 +2267,7 @@
 		});
 	});
 
-	$('.add-new-entry').on('click', function(){
+	$(document).on('click', '.add-new-entry', function(){
 		var $template = $(this).parents('table').first().children('tbody').children('tr.template');
 		$number = $(this).parents('table').first().children('tbody').children('tr').length - 2;
 		$clone = $template.clone(true);
@@ -2178,8 +2285,6 @@
 			$(this).attr('rel', '');
 		});
 		$clone.insertBefore($template).css('display', 'none').removeClass('template').fadeIn();
-
-		wpaiMakeDroppable();
 
 		return false;
 	});

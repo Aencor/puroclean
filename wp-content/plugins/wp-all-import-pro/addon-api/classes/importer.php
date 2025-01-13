@@ -133,11 +133,11 @@ class PMXI_Addon_Importer {
         }
 
         if ( $importData['logger'] ) {
-            call_user_func( $importData['logger'], __( sprintf( '<strong>%s:</strong>', strtoupper( $this->addon->name() ) ), 'wp_all_import_plugin' ) );
+            call_user_func( $importData['logger'], __( sprintf( '<strong>%s:</strong>', strtoupper( $this->addon->name() ) ), 'wp-all-import-pro' ) );
         }
 
         if ( ! array_key_exists( $this->addon->slug, $options ) ) {
-            call_user_func( $importData['logger'], __( 'No options found for this addon, skipping...', 'wp_all_import_plugin' ) );
+            call_user_func( $importData['logger'], __( 'No options found for this addon, skipping...', 'wp-all-import-pro' ) );
 
             return null;
         }
@@ -162,7 +162,7 @@ class PMXI_Addon_Importer {
             $field_value = $this->unwrapValue( $field, $parsedData[ $field_slug ], $index );
 
             if ( ! $this->canUpdateField( $field, $options ) ) {
-	            call_user_func( $importData['logger'], __( '- Field `'.$field['key'].'` skipped due to import settings.', 'wp_all_import_plugin' ) );
+	            call_user_func( $importData['logger'], __( '- Field `'.$field['key'].'` skipped due to import settings.', 'wp-all-import-pro' ) );
 				unset($fields[$field_index]);
                 continue;
             }
@@ -183,7 +183,7 @@ class PMXI_Addon_Importer {
                         $subfield_switcher = $switchers[ $field_slug ]['rows'][ $rowIndex ][ $subfield_slug ] ?? 'no';
 
                         if ( $subfield_switcher == 'yes' ) {
-                            $field_value['rows'][ $rowIndex ][ $subfield_slug ] = $multiples[ $field_slug ]['rows'][ $rowIndex ][ $subfield_slug ];
+                            $field_value['rows'][ $rowIndex ][ $subfield_slug ] = $multiples[ $field_slug ]['rows'][ $rowIndex ][ $subfield_slug ] ?? 0;
                         }
                     }
                 }
@@ -206,7 +206,7 @@ class PMXI_Addon_Importer {
                 $field_value,
                 $importData,
                 $importData['logger'],
-                $import_options[ $field_slug ]
+                $import_options[ $field_slug ] ?? []
             );
 
             // Cast the value to a new value if a cast class exists
@@ -248,7 +248,7 @@ class PMXI_Addon_Importer {
 
         // If no fields are found, skip the import
         if ( empty( $data ) ) {
-            call_user_func( $importData['logger'], __( 'No options found for this addon, skipping...', 'wp_all_import_plugin' ) );
+            call_user_func( $importData['logger'], __( 'No options found for this addon, skipping...', 'wp-all-import-pro' ) );
 
             return null;
         }
